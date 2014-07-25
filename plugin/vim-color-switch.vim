@@ -1,51 +1,50 @@
-if !exists("g:vim_color_switch")
-    let g:vim_color_switch = 1
+if !exists('g:color_switch_loaded')
+    let g:color_switch_loaded = 1
 else
     finish
 endif
 
-if !exists('g:colors_dir')
-    " Default to ~/.vim/colors because that's where I stick my colorschemes ^_^
-    let g:colors_dir = '~/.vim/colors'
-endif
+func! s:get_colorschemes()
+    let paths = split(globpath(&rtp, 'colors/*.vim'), '\n')
+    let schemes = {}
 
-let g:colors_list = []
-func! s:SwitchColor(direction)
-    " Get full list of colors available
-    let len = len(g:colors_list)
-    if len == 0
-        let colors = system('ls '.g:colors_dir)
-        if colors =~ 'No such file or directory' || colors == ''
-            echoerr 'g:colors_dir set to invalid directory'
-            return
-        endif
-        let g:colors_list = split(colors)
-        let len = len(g:colors_list)
+    for path in paths
+        let file = split(path, '/')[-1]
+        let name = strpart(file, 0, len(file)-4)
+        exe 'let schemes["'.name.'"] = 1'
+    endfor
+
+    return sort(keys(schemes))
+endf
+
+func! s:switch_color(direction)
+    if !exists('g:color_switch_schemes')
+        let g:color_switch_schemes = s:get_colorschemes()
     endif
 
-    " Get index of current colorscheme in list of colors
-    let idx = index(g:colors_list, g:colors_name.'.vim')
+    let num_colorschemes = len(g:color_switch_schemes)
+
+    " Get index of current colorscheme in list of colorschemes
+    let idx = index(g:color_switch_schemes, g:colors_name)
 
     " Get index of next colorscheme
     if a:direction == 'up'
-        let next = idx+1
+        let next = idx + 1
     elseif a:direction == 'down'
-        let next = idx-1
+        let next = idx - 1
     endif
 
     " Wrap around if necessary
-    if next == len
+    if next == num_colorschemes
         let next = 0
-    elseif next < 0
-        let next = len-1
     endif
 
     " Clear, change colors, and echo name
     echo
-    exe 'colorscheme '.strpart(g:colors_list[next], 0, len(g:colors_list[next])-4)
+    exe 'colorscheme '.g:color_switch_schemes[next]
     redraw!
     echo g:colors_name
 endfunc
 
-command! ColorNext call s:SwitchColor('up')
-command! ColorPrev call s:SwitchColor('down')
+command! ColorNext call s:switch_color('up')
+command! ColorPrev call s:switch_color('down')
