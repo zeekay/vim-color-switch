@@ -1,5 +1,5 @@
-if !exists("g:bebop_loaded")
-    let g:bebop_loaded = 1
+if !exists("g:vim_color_switch")
+    let g:vim_color_switch = 1
 else
     finish
 endif
